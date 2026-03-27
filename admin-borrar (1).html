@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Admin · Borrar Registros</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;700&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#1c1c1c;font-family:'IBM Plex Sans',sans-serif;color:#fff;min-height:100vh}
+button{font-family:'IBM Plex Sans',sans-serif;-webkit-appearance:none;appearance:none}
+
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══ PIN SCREEN ══ */
+#pin-screen{position:fixed;inset:0;background:#1c1c1c;z-index:9999;
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.pin-box{background:#111;border:2px solid #c07d2a;padding:32px 24px;width:360px;
+  max-width:96vw;display:flex;flex-direction:column;align-items:center;gap:16px}
+.pin-logo{font-family:'Bebas Neue';font-size:14px;letter-spacing:4px;color:#c07d2a;
+  border:1px solid #c07d2a;padding:6px 14px}
+.pin-title{font-family:'Bebas Neue';font-size:28px;letter-spacing:4px;color:#fff}
+.pin-sub{font-size:10px;color:#555;font-family:'IBM Plex Mono';letter-spacing:2px;text-align:center}
+.pin-display{width:100%;background:#000;border:2px solid #333;padding:14px;
+  font-size:24px;font-family:'IBM Plex Mono';text-align:center;letter-spacing:8px;
+  color:#c07d2a;min-height:56px}
+.pin-display.shake{animation:shake .4s ease}
+.pin-display.error{border-color:#dc2626;color:#dc2626}
+.pin-keyboard{width:100%;display:flex;flex-direction:column;gap:6px}
+.pin-row{display:flex;gap:6px}
+.pk{flex:1;height:52px;background:#1a1a1a;border:1px solid #333;color:#fff;
+  font-family:'IBM Plex Mono';font-size:15px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.pk:active{background:#333}
+.pk.del{background:#1a0000;border-color:#440000;color:#f87171;font-size:18px}
+.pk.confirm{flex:2;background:#c07d2a;color:#1c1c1c;font-family:'Bebas Neue';
+  font-size:16px;letter-spacing:3px;height:52px}
+.pk.confirm:active{background:#a06020}
+.pin-error{font-size:11px;color:#dc2626;font-family:'IBM Plex Mono';min-height:16px;text-align:center}
+
+/* ══ APP ══ */
+#app{display:none;min-height:100vh;flex-direction:column}
+
+header{background:#111;border-bottom:1px solid #c07d2a;padding:16px 20px;
+  display:flex;align-items:center;justify-content:space-between}
+.hdr-left{display:flex;flex-direction:column}
+.hdr-title{font-family:'Bebas Neue';font-size:22px;letter-spacing:4px;color:#c07d2a}
+.hdr-sub{font-size:10px;color:#555;font-family:'IBM Plex Mono';letter-spacing:2px;margin-top:2px}
+.hdr-count{font-family:'Bebas Neue';font-size:32px;color:#c07d2a}
+.hdr-count span{font-size:11px;color:#555;display:block;text-align:right;font-family:'IBM Plex Mono'}
+
+/* Filtros */
+.filters{background:#111;padding:12px 20px;display:flex;gap:10px;flex-wrap:wrap;
+  border-bottom:1px solid #222}
+.filter-btn{padding:6px 14px;border:1px solid #333;background:transparent;color:#666;
+  font-family:'IBM Plex Mono';font-size:11px;letter-spacing:1px;cursor:pointer}
+.filter-btn.active{border-color:#c07d2a;color:#c07d2a;background:#1a1200}
+.search-box{flex:1;min-width:160px;background:#000;border:1px solid #333;
+  color:#fff;padding:7px 12px;font-family:'IBM Plex Mono';font-size:12px}
+.search-box::placeholder{color:#444}
+
+/* Lista */
+.list{flex:1;padding:12px 16px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+.empty{text-align:center;color:#444;font-family:'IBM Plex Mono';font-size:12px;
+  padding:48px 20px;letter-spacing:2px}
+
+/* Tarjeta */
+.card{background:#111;border:1px solid #222;padding:14px 16px;
+  display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
+  animation:fadeIn .2s ease}
+.card.selected{border-color:#dc2626;background:#1a0000}
+.card-left{display:flex;flex-direction:column;gap:4px}
+.card-id{font-family:'IBM Plex Mono';font-size:10px;color:#444;letter-spacing:1px}
+.card-name{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;color:#fff}
+.card-dates{font-family:'IBM Plex Mono';font-size:11px;color:#555;
+  display:flex;gap:12px;flex-wrap:wrap}
+.card-dates b{color:#888}
+.badge{display:inline-block;padding:2px 8px;font-size:9px;font-weight:700;
+  letter-spacing:1px;margin-right:6px}
+.ch{background:#2a1a00;color:#f59e0b;border:1px solid #78350f}
+.sh{background:#0f172a;color:#60a5fa;border:1px solid #1e3a8a}
+.s-ok{color:#4ade80}.s-warn{color:#facc15}.s-crit{color:#f87171;animation:blink .8s infinite}
+.s-exp{color:#555}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Botón borrar por tarjeta */
+.btn-del-card{background:#1a0000;border:1px solid #7f1d1d;color:#f87171;
+  padding:10px 14px;font-family:'IBM Plex Mono';font-size:11px;cursor:pointer;
+  letter-spacing:1px;min-width:72px;min-height:48px}
+.btn-del-card:active{background:#450a0a}
+
+/* Barra inferior — borrar seleccionados */
+.bottom-bar{background:#450a0a;border-top:2px solid #dc2626;padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bottom-bar.hidden{display:none}
+.sel-info{font-family:'IBM Plex Mono';font-size:12px;color:#fca5a5}
+.btn-del-all{background:#dc2626;color:#fff;border:none;padding:12px 20px;
+  font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;cursor:pointer;min-height:48px}
+.btn-del-all:active{background:#b91c1c}
+.btn-cancel-sel{background:transparent;border:1px solid #555;color:#888;
+  padding:12px 16px;font-family:'IBM Plex Mono';font-size:11px;cursor:pointer;min-height:48px}
+
+/* Modal confirmación */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:8888;
+  display:none;align-items:flex-end;justify-content:center}
+#modal.show{display:flex}
+.modal-box{background:#111;border:2px solid #dc2626;padding:28px 24px;
+  width:100%;max-width:420px;margin-bottom:0}
+.modal-title{font-family:'Bebas Neue';font-size:22px;letter-spacing:3px;color:#dc2626;margin-bottom:8px}
+.modal-body{font-family:'IBM Plex Mono';font-size:12px;color:#888;line-height:1.8;margin-bottom:20px}
+.modal-body b{color:#fff}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-confirm-del{background:#dc2626;color:#fff;border:none;padding:16px;
+  font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;cursor:pointer}
+.btn-cancel-del{background:transparent;border:2px solid #333;color:#666;padding:16px;
+  font-family:'IBM Plex Mono';font-size:13px;cursor:pointer}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:#16a34a;color:#fff;padding:12px 24px;font-family:'IBM Plex Mono';
+  font-size:12px;letter-spacing:1px;z-index:9998;opacity:0;transition:opacity .3s;
+  pointer-events:none;white-space:nowrap}
+#toast.err{background:#dc2626}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- ══ PIN SCREEN ══ -->
+<div id="pin-screen">
+  <div class="pin-box">
+    <div class="pin-logo">MASTER</div>
+    <div class="pin-title">ACCESO ADMIN</div>
+    <div class="pin-sub">PANEL DE ELIMINACIÓN DE REGISTROS</div>
+    <div class="pin-display" id="pin-display">_</div>
+    <div class="pin-keyboard" id="keyboard">
+      <div class="pin-row">
+        <div class="pk" data-char="1">1</div>
+        <div class="pk" data-char="2">2</div>
+        <div class="pk" data-char="3">3</div>
+        <div class="pk" data-char="4">4</div>
+        <div class="pk" data-char="5">5</div>
+      </div>
+      <div class="pin-row">
+        <div class="pk" data-char="6">6</div>
+        <div class="pk" data-char="7">7</div>
+        <div class="pk" data-char="8">8</div>
+        <div class="pk" data-char="9">9</div>
+        <div class="pk" data-char="0">0</div>
+      </div>
+      <div class="pin-row">
+        <div class="pk" data-char="a">a</div>
+        <div class="pk" data-char="b">b</div>
+        <div class="pk" data-char="c">c</div>
+        <div class="pk" data-char="d">d</div>
+        <div class="pk" data-char="e">e</div>
+        <div class="pk" data-char="f">f</div>
+      </div>
+      <div class="pin-row">
+        <div class="pk del" data-char="__DEL__">⌫</div>
+        <div class="pk confirm" data-char="__OK__">✓ INGRESAR</div>
+      </div>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+  <header>
+    <div class="hdr-left">
+      <div class="hdr-title">ADMIN · BORRAR REGISTROS</div>
+      <div class="hdr-sub">PANEL MAESTRO · MADURACIÓN CONTROLADA</div>
+    </div>
+    <div class="hdr-count"><span>REGISTROS</span><span id="total-count">—</span></div>
+  </header>
+
+  <div class="filters">
+    <input class="search-box" id="search" type="text" placeholder="Buscar por corte o ID..." oninput="renderList()">
+    <button type="button" class="filter-btn active" data-f="todos" onclick="setFilter('todos',this)">TODOS</button>
+    <button type="button" class="filter-btn" data-f="con-hueso" onclick="setFilter('con-hueso',this)">🦴 CON HUESO</button>
+    <button type="button" class="filter-btn" data-f="sin-hueso" onclick="setFilter('sin-hueso',this)">✦ SIN HUESO</button>
+    <button type="button" class="filter-btn" data-f="vencido" onclick="setFilter('vencido',this)">VENCIDOS</button>
+  </div>
+
+  <div class="list" id="list">
+    <div class="empty">Cargando registros...</div>
+  </div>
+
+  <div class="bottom-bar hidden" id="bottom-bar">
+    <div class="sel-info" id="sel-info">0 seleccionados</div>
+    <button type="button" class="btn-cancel-sel" onclick="clearSelection()">CANCELAR</button>
+    <button type="button" class="btn-del-all" onclick="openModal()">🗑 BORRAR SELECCIONADOS</button>
+  </div>
+</div>
+
+<!-- ══ MODAL ══ -->
+<div id="modal">
+  <div class="modal-box">
+    <div class="modal-title">⚠ CONFIRMAR ELIMINACIÓN</div>
+    <div class="modal-body" id="modal-body">¿Eliminar los registros seleccionados?</div>
+    <div class="modal-btns">
+      <button type="button" class="btn-cancel-del" onclick="closeModal()">CANCELAR</button>
+      <button type="button" class="btn-confirm-del" onclick="deleteSelected()">SÍ, BORRAR</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://cozuvxsiceecpalpibbh.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvenV2eHNpY2VlY3BhbHBpYmJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MTM0MzksImV4cCI6MjA4ODM4OTQzOX0.-AZ328QobNdPrx6QiGtGN3EdGgimIIpf93QYqI_a9qs";
+const TABLE = "cortes_maduracion";
+
+// ── CAMBIAR ESTA CLAVE MASTER ──────────────────────
+const MASTER_PIN = "master2026";
+// ──────────────────────────────────────────────────
+
+let entries   = [];
+let selected  = new Set();
+let activeFilter = "todos";
+let pinTyped  = "";
+
+// ── PIN ──────────────────────────────────────────
+document.querySelectorAll(".pk").forEach(el=>{
+  el.addEventListener("pointerdown", e=>{
+    e.preventDefault();
+    const c = el.dataset.char;
+    if(c==="__DEL__")     { pinTyped=pinTyped.slice(0,-1); }
+    else if(c==="__OK__") { checkPin(); return; }
+    else                  { pinTyped+=c; }
+    renderPin();
+  });
+});
+document.addEventListener("keydown", e=>{
+  if(document.getElementById("pin-screen").style.display==="none") return;
+  if(e.key==="Enter")     { checkPin(); return; }
+  if(e.key==="Backspace") { pinTyped=pinTyped.slice(0,-1); renderPin(); return; }
+  if(e.key.length===1)    { pinTyped+=e.key; renderPin(); }
+});
+function renderPin(){
+  document.getElementById("pin-display").textContent = pinTyped.length ? "•".repeat(pinTyped.length) : "_";
+}
+function checkPin(){
+  if(pinTyped===MASTER_PIN){
+    document.getElementById("pin-screen").style.display="none";
+    document.getElementById("app").style.display="flex";
+    loadEntries();
+  } else {
+    const d=document.getElementById("pin-display");
+    d.classList.add("error","shake");
+    document.getElementById("pin-error").textContent="Clave incorrecta";
+    setTimeout(()=>{
+      pinTyped=""; renderPin();
+      d.classList.remove("error","shake");
+      document.getElementById("pin-error").textContent="";
+    },900);
+  }
+}
+
+// ── SUPABASE ──────────────────────────────────────
+async function loadEntries(){
+  document.getElementById("list").innerHTML=`<div class="empty">Cargando...</div>`;
+  try {
+    const r = await fetch(
+      SUPABASE_URL+"/rest/v1/"+TABLE+"?select=*&order=fecha_ingreso.asc&limit=500",
+      { headers:{ "apikey":SUPABASE_KEY, "Authorization":"Bearer "+SUPABASE_KEY, "Accept":"application/json" } }
+    );
+    if(!r.ok){ throw new Error("HTTP "+r.status+": "+await r.text()); }
+    entries = await r.json();
+    if(!Array.isArray(entries)) throw new Error("Respuesta inesperada");
+    document.getElementById("total-count").textContent = entries.length;
+    renderList();
+  } catch(err){
+    document.getElementById("list").innerHTML=
+      `<div class="empty" style="color:#f87171">ERROR: ${err.message}</div>`;
+  }
+}
+
+async function sbDelete(id){
+  const r = await fetch(
+    SUPABASE_URL+"/rest/v1/"+TABLE+"?id=eq."+id,
+    { method:"DELETE", headers:{ "apikey":SUPABASE_KEY, "Authorization":"Bearer "+SUPABASE_KEY } }
+  );
+  return r.ok || r.status===204;
+}
+
+// ── ESTADO ────────────────────────────────────────
+const fmt = d => new Date(d+"T00:00:00").toLocaleDateString("es-MX",{day:"2-digit",month:"short",year:"numeric"}).toUpperCase();
+function getStatus(venc){
+  const t=new Date(); t.setHours(0,0,0,0);
+  const diff=Math.ceil((new Date(venc+"T00:00:00")-t)/86400000);
+  if(diff<0)  return {lbl:"VENCIDO",   cls:"s-exp"};
+  if(diff<=1) return {lbl:"CRÍTICO",   cls:"s-crit"};
+  if(diff<=3) return {lbl:"POR VENCER",cls:"s-warn"};
+  return              {lbl:"EN PROCESO",cls:"s-ok"};
+}
+
+// ── FILTROS ───────────────────────────────────────
+function setFilter(f, btn){
+  activeFilter=f;
+  document.querySelectorAll(".filter-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  renderList();
+}
+
+// ── RENDER ────────────────────────────────────────
+function renderList(){
+  const q = document.getElementById("search").value.toLowerCase().trim();
+  let list = entries.filter(e=>{
+    if(activeFilter==="con-hueso" && e.tipo_corte!=="con-hueso") return false;
+    if(activeFilter==="sin-hueso" && e.tipo_corte!=="sin-hueso") return false;
+    if(activeFilter==="vencido"){
+      const d=Math.ceil((new Date(e.fecha_vencimiento+"T00:00:00")-new Date())/86400000);
+      if(d>=0) return false;
+    }
+    if(q && !e.corte.toLowerCase().includes(q) && !e.id.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  if(!list.length){
+    document.getElementById("list").innerHTML=`<div class="empty">NO HAY REGISTROS</div>`;
+    return;
+  }
+
+  const st = getStatus;
+  document.getElementById("list").innerHTML = list.map(e=>{
+    const s   = st(e.fecha_vencimiento);
+    const sel = selected.has(e.id);
+    const tipoCls = e.tipo_corte==="con-hueso"?"ch":"sh";
+    const tipoBadge = e.tipo_corte==="con-hueso"?"🦴 C.H":"✦ S.H";
+    return `<div class="card ${sel?"selected":""}" id="card-${e.id}">
+      <div class="card-left">
+        <div class="card-id">${e.id}</div>
+        <div class="card-name">
+          <span class="badge ${tipoCls}">${tipoBadge}</span>${e.corte.toUpperCase()}
+        </div>
+        <div class="card-dates">
+          <span><b>INGRESO</b> ${fmt(e.fecha_ingreso)}</span>
+          <span><b>VENCE</b> ${fmt(e.fecha_vencimiento)}</span>
+          <span class="${s.cls}">${s.lbl}</span>
+        </div>
+      </div>
+      <button type="button" class="btn-del-card" onclick="toggleSelect('${e.id}')">
+        ${sel?"✓ SEL":"BORRAR"}
+      </button>
+    </div>`;
+  }).join("");
+}
+
+// ── SELECCIÓN ─────────────────────────────────────
+function toggleSelect(id){
+  if(selected.has(id)) selected.delete(id);
+  else selected.add(id);
+  updateBottomBar();
+  renderList();
+}
+function clearSelection(){
+  selected.clear();
+  updateBottomBar();
+  renderList();
+}
+function updateBottomBar(){
+  const bar = document.getElementById("bottom-bar");
+  if(selected.size===0){ bar.classList.add("hidden"); return; }
+  bar.classList.remove("hidden");
+  document.getElementById("sel-info").textContent=`${selected.size} seleccionado${selected.size>1?"s":""}`;
+}
+
+// ── MODAL ─────────────────────────────────────────
+function openModal(){
+  if(!selected.size) return;
+  const names = [...selected].map(id=>{
+    const e=entries.find(x=>x.id===id);
+    return e ? `<b>${e.corte}</b> (${e.id})` : id;
+  }).join("<br>");
+  document.getElementById("modal-body").innerHTML=
+    `Se eliminarán permanentemente ${selected.size} registro${selected.size>1?"s":""}:<br><br>${names}`;
+  document.getElementById("modal").classList.add("show");
+}
+function closeModal(){
+  document.getElementById("modal").classList.remove("show");
+}
+
+// ── BORRAR ────────────────────────────────────────
+async function deleteSelected(){
+  closeModal();
+  const ids = [...selected];
+  let ok=0, fail=0;
+  for(const id of ids){
+    const ok2 = await sbDelete(id);
+    if(ok2){ ok++; entries=entries.filter(e=>e.id!==id); selected.delete(id); }
+    else fail++;
+  }
+  document.getElementById("total-count").textContent=entries.length;
+  updateBottomBar();
+  renderList();
+  showToast(ok>0?`✓ ${ok} registro${ok>1?"s":""} eliminado${ok>1?"s":""}`:null,
+            fail>0?`✗ ${fail} error${fail>1?"es":""}`:null, fail>0);
+}
+
+function showToast(msg, errMsg, isErr=false){
+  const t=document.getElementById("toast");
+  t.textContent = isErr?(errMsg||msg):(msg||"✓ Listo");
+  t.className="show"+(isErr?" err":"");
+  setTimeout(()=>t.className="",3000);
+}
+</script>
+</body>
+</html>
