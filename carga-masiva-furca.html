@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Carga Masiva — Furca</title>
+<style>
+  body{font-family:monospace;background:#111;color:#fff;padding:30px;max-width:700px;margin:0 auto}
+  h1{color:#c07d2a;font-size:20px;letter-spacing:3px}
+  .btn{background:#c07d2a;color:#fff;border:none;padding:14px 32px;font-size:16px;
+    cursor:pointer;letter-spacing:2px;font-family:monospace;margin-top:20px;width:100%}
+  .btn:disabled{background:#444;cursor:not-allowed}
+  #log{margin-top:20px;background:#000;padding:16px;max-height:400px;overflow-y:auto;
+    font-size:12px;line-height:1.8;border:1px solid #333}
+  .ok{color:#4ade80}.err{color:#f87171}.info{color:#fbbf24}
+</style>
+</head>
+<body>
+<h1>CARGA MASIVA — FURCA</h1>
+<p style="color:#aaa;font-size:12px">35 registros listos para cargar</p>
+
+<div id="resumen" style="background:#1a1a1a;padding:16px;margin:16px 0;font-size:12px;line-height:2">
+  <span style="color:#c07d2a">SIN HUESO:</span> 19 registros<br>
+  <span style="color:#c07d2a">CON HUESO:</span> 16 registros
+</div>
+
+<button class="btn" id="btn" onclick="cargar()">▶ INICIAR CARGA</button>
+<div id="log"></div>
+
+<script>
+const SUPABASE_URL = "https://cozuvxsiceecpalpibbh.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvenV2eHNpY2VlY3BhbHBpYmJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MTM0MzksImV4cCI6MjA4ODM4OTQzOX0.-AZ328QobNdPrx6QiGtGN3EdGgimIIpf93QYqI_a9qs";
+const TABLE = "cortes_maduracion";
+const ROWS = [
+  {
+    "id": "MC-50ZEBAJL",
+    "corte": "Lomito",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-24",
+    "fecha_reempaque": "2026-03-26",
+    "fecha_vencimiento": "2026-04-15",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 11.8,
+    "notas": null
+  },
+  {
+    "id": "MC-EW1JP125",
+    "corte": "Lomito",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-21",
+    "fecha_reempaque": "2026-03-23",
+    "fecha_vencimiento": "2026-04-12",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 19.8,
+    "notas": null
+  },
+  {
+    "id": "MC-C159PONQ",
+    "corte": "Falda",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-27",
+    "fecha_reempaque": "2026-03-29",
+    "fecha_vencimiento": "2026-04-18",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 32.0,
+    "notas": null
+  },
+  {
+    "id": "MC-IT34S1C8",
+    "corte": "Falda",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-24",
+    "fecha_reempaque": "2026-03-26",
+    "fecha_vencimiento": "2026-04-15",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 21.3,
+    "notas": null
+  },
+  {
+    "id": "MC-BIQU5JXG",
+    "corte": "Falda",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-20",
+    "fecha_reempaque": "2026-03-22",
+    "fecha_vencimiento": "2026-04-11",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 29.2,
+    "notas": null
+  },
+  {
+    "id": "MC-OQVZSRMR",
+    "corte": "Falda",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-20",
+    "fecha_reempaque": "2026-03-22",
+    "fecha_vencimiento": "2026-04-11",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 30.0,
+    "notas": null
+  },
+  {
+    "id": "MC-00FT6UNM",
+    "corte": "Falda",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-13",
+    "fecha_reempaque": "2026-03-15",
+    "fecha_vencimiento": "2026-04-04",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 19.4,
+    "notas": null
+  },
+  {
+    "id": "MC-43U24DFA",
+    "corte": "Coulotte",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-20",
+    "fecha_reempaque": "2026-03-22",
+    "fecha_vencimiento": "2026-04-11",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 20.8,
+    "notas": null
+  },
+  {
+    "id": "MC-L9B5GHC7",
+    "corte": "Coulotte",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-20",
+    "fecha_reempaque": "2026-03-22",
+    "fecha_vencimiento": "2026-04-11",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 21.7,
+    "notas": null
+  },
+  {
+    "id": "MC-JO33V7BF",
+    "corte": "Coulotte",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-19",
+    "fecha_reempaque": "2026-03-21",
+    "fecha_vencimiento": "2026-04-10",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 21.9,
+    "notas": null
+  },
+  {
+    "id": "MC-B3OLID9N",
+    "corte": "Coulotte",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-23",
+    "fecha_reempaque": "2026-03-25",
+    "fecha_vencimiento": "2026-04-14",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 30.4,
+    "notas": null
+  },
+  {
+    "id": "MC-ZC89MU32",
+    "corte": "Coulotte",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-27",
+    "fecha_reempaque": "2026-03-29",
+    "fecha_vencimiento": "2026-04-18",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 30.0,
+    "notas": null
+  },
+  {
+    "id": "MC-JFJ3T30S",
+    "corte": "Entrecote",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-20",
+    "fecha_reempaque": "2026-03-22",
+    "fecha_vencimiento": "2026-04-11",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 34.0,
+    "notas": null
+  },
+  {
+    "id": "MC-FST1691I",
+    "corte": "Entrecote",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-10",
+    "fecha_reempaque": "2026-03-12",
+    "fecha_vencimiento": "2026-04-01",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 16.2,
+    "notas": null
+  },
+  {
+    "id": "MC-WRDB63XW",
+    "corte": "Entrecote",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-27",
+    "fecha_reempaque": "2026-03-29",
+    "fecha_vencimiento": "2026-04-18",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 15.0,
+    "notas": null
+  },
+  {
+    "id": "MC-I5220C4D",
+    "corte": "Sirloin",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-02-27",
+    "fecha_reempaque": "2026-03-01",
+    "fecha_vencimiento": "2026-03-21",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 26.5,
+    "notas": null
+  },
+  {
+    "id": "MC-1UE9K0ZN",
+    "corte": "Sirloin",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-06",
+    "fecha_reempaque": "2026-03-08",
+    "fecha_vencimiento": "2026-03-28",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 23.9,
+    "notas": null
+  },
+  {
+    "id": "MC-7EHHOCLP",
+    "corte": "Sirloin",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-10",
+    "fecha_reempaque": "2026-03-12",
+    "fecha_vencimiento": "2026-04-01",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 20.0,
+    "notas": null
+  },
+  {
+    "id": "MC-HVQTM7CL",
+    "corte": "Lomito",
+    "tipo_corte": "sin-hueso",
+    "fecha_ingreso": "2026-03-27",
+    "fecha_reempaque": "2026-03-29",
+    "fecha_vencimiento": "2026-04-18",
+    "dias_maduracion": 22,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 20.0,
+    "notas": null
+  },
+  {
+    "id": "MC-0LBYGR4U",
+    "corte": "Ribeye con Hueso",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-11",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-03-26",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 8.46,
+    "notas": null
+  },
+  {
+    "id": "MC-MWOAGRFS",
+    "corte": "Ribeye con Hueso",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-14",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-03-29",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 8.42,
+    "notas": null
+  },
+  {
+    "id": "MC-5RI9M63J",
+    "corte": "Ribeye con Hueso",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-18",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-04-02",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 9.46,
+    "notas": null
+  },
+  {
+    "id": "MC-C7VUZM89",
+    "corte": "Ribeye con Hueso",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-24",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-04-08",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 9.73,
+    "notas": null
+  },
+  {
+    "id": "MC-DAOTKE8C",
+    "corte": "Ribeye con Hueso",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-24",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-04-08",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 9.4,
+    "notas": null
+  },
+  {
+    "id": "MC-AE2ZX7N7",
+    "corte": "Porterhouse",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-14",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-03-29",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 10.56,
+    "notas": null
+  },
+  {
+    "id": "MC-9EKKVEPY",
+    "corte": "Porterhouse",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-14",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-03-29",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 8.7,
+    "notas": null
+  },
+  {
+    "id": "MC-RQN9ZK1M",
+    "corte": "Porterhouse",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-16",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-03-31",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 10.45,
+    "notas": null
+  },
+  {
+    "id": "MC-MAGGK86D",
+    "corte": "Porterhouse",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-18",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-04-02",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 8.92,
+    "notas": null
+  },
+  {
+    "id": "MC-SM9PFG1I",
+    "corte": "Porterhouse",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-18",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-04-02",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 9.57,
+    "notas": null
+  },
+  {
+    "id": "MC-Q3RDAO4L",
+    "corte": "Porterhouse",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-20",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-04-04",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 11.65,
+    "notas": null
+  },
+  {
+    "id": "MC-CLPIMXXG",
+    "corte": "Porterhouse",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-20",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-04-04",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 9.79,
+    "notas": null
+  },
+  {
+    "id": "MC-E14VRL9A",
+    "corte": "Porterhouse",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-24",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-04-08",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 11.37,
+    "notas": null
+  },
+  {
+    "id": "MC-WJIY2HY5",
+    "corte": "Porterhouse",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-24",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-04-08",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 10.66,
+    "notas": null
+  },
+  {
+    "id": "MC-RF5FYFQ8",
+    "corte": "Porterhouse",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-24",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-04-08",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 11.68,
+    "notas": null
+  },
+  {
+    "id": "MC-SRF399AT",
+    "corte": "Porterhouse",
+    "tipo_corte": "con-hueso",
+    "fecha_ingreso": "2026-03-27",
+    "fecha_reempaque": null,
+    "fecha_vencimiento": "2026-04-11",
+    "dias_maduracion": 15,
+    "proveedor": "Sin especificar",
+    "responsable": "Carga masiva",
+    "peso_kg": 25.0,
+    "notas": null
+  }
+];
+
+function log(msg, cls="info"){
+  const d = document.getElementById("log");
+  d.innerHTML += `<div class="${cls}">${msg}</div>`;
+  d.scrollTop = d.scrollHeight;
+}
+
+async function cargar(){
+  const btn = document.getElementById("btn");
+  btn.disabled = true;
+  btn.textContent = "Cargando...";
+  log(`Iniciando carga de ${ROWS.length} registros...`);
+  let ok=0, err=0;
+  for(const row of ROWS){
+    try{
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`,{
+        method:"POST",
+        headers:{
+          "apikey":SUPABASE_KEY,
+          "Authorization":"Bearer "+SUPABASE_KEY,
+          "Content-Type":"application/json",
+          "Prefer":"return=minimal"
+        },
+        body: JSON.stringify(row)
+      });
+      if(r.ok){
+        ok++;
+        log(`✓ [${ok+err}/${ROWS.length}] ${row.corte} · ${row.fecha_ingreso} · ${row.peso_kg}kg`, "ok");
+      } else {
+        const txt = await r.text();
+        err++;
+        log(`✗ ${row.corte} ${row.fecha_ingreso}: ${txt}`, "err");
+      }
+    }catch(e){
+      err++;
+      log(`✗ Error: ${e.message}`, "err");
+    }
+    await new Promise(res=>setTimeout(res,120));
+  }
+  log(`\n══ LISTO: ${ok} exitosos · ${err} errores ══`, ok===ROWS.length?"ok":"err");
+  btn.textContent = "✓ CARGA COMPLETADA";
+}
+</script>
+</body>
+</html>
